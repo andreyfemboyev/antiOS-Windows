@@ -1,0 +1,65 @@
+name: Publish antiOS v1.0.0
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-v1.0.0.yml]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency: antiOS-publish-v1.0.0
+
+env:
+  BUILD_RUN: "45663424565"
+  BUILT_COMMIT: "cfb15806730ccb7759ca1c946b96ab962ecf6fca"
+  RELEASE_ARCHIVE: "antiOS-1.0.0-windows-x86_64.zip"
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'Publish antiOS v1.0.0 from its validated build'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify the native build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run view "$BUILD_RUN" --repo "$GITHUB_REPOSITORY" --json conclusion,headSha |
+            jq -e --arg commit "$BUILT_COMMIT" '.conclusion == "success" and .headSha == $commit' >/dev/null
+      - name: Download the verified native artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ env.BUILD_RUN }}
+          name: antiOS-windows-x86_64
+          path: package
+      - name: Publish v1.0.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="package/$RELEASE_ARCHIVE"
+          test -s "$archive"
+          unzip -tq "$archive"
+          cat > "$RUNNER_TEMP/antiOS-notes.md" <<'NOTES'
+          *An operating system without a purpose.*
+
+          Seven organisms inhabit an evolving field shaped by cursor gestures, entropy, and fragments of previous sessions.
+
+          Extract the ZIP and open `antios.exe` on 64-bit Windows 10 or later. The release was built with MSVC on Windows. The package includes the exhibition catalogue and license notices.
+
+          Press **Esc** for controls, **M** for sound, and **F11** for fullscreen.
+          NOTES
+          gh release create v1.0.0 "$archive" --repo "$GITHUB_REPOSITORY" \
+            --target "$BUILT_COMMIT" --title 'antiOS 1.0.0 for Windows' \
+            --notes-file "$RUNNER_TEMP/antiOS-notes.md" --draft
+          gh release download v1.0.0 --repo "$GITHUB_REPOSITORY" \
+            --pattern "$RELEASE_ARCHIVE" --dir "$RUNNER_TEMP/verify"
+          cmp "$archive" "$RUNNER_TEMP/verify/$RELEASE_ARCHIVE"
+          gh release edit v1.0.0 --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" --json isDraft,url,assets |
+            jq -e --arg asset "$RELEASE_ARCHIVE" 'select(.isDraft == false and any(.assets[]; .name == $asset)) | .url'

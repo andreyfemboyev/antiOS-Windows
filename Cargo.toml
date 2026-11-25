@@ -1,0 +1,29 @@
+[package]
+name = "antios"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.86"
+description = "An operating system without a purpose."
+license = "MIT"
+default-run = "antios"
+
+[dependencies]
+anyhow = "1"
+bytemuck = { version = "1", features = ["derive"] }
+clap = { version = "=4.5.51", features = ["derive"] }
+cpal = "0.15"
+directories = "6"
+fontdue = "0.9"
+fs2 = "0.4"
+glam = { version = "0.30", features = ["serde"] }
+png = "0.17"
+pollster = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+wgpu = "24"
+winit = "0.30"
+
+[profile.release]
+lto = "thin"
+strip = true

@@ -1,5 +1,9 @@
 # antiOS
 
+**Interactive generative artwork for Windows and Linux — not a conventional operating system.**
+
+[Download for Windows](https://github.com/andreyfemboyev/antiOS-Windows/releases) · [Linux edition](https://github.com/andreyfemboyev/antiOS-Linux) · [Project portfolio](https://github.com/andreyfemboyev/portfolio)
+
 *An operating system without a purpose.*
 
 antiOS is a place where software abandons utility and becomes an object of contemplation.
